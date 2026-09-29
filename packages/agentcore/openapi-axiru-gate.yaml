@@ -1,0 +1,81 @@
+openapi: 3.0.3
+info:
+  title: Axiru payment gate
+  version: 0.1.0
+  description: >
+    Deterministic allow / hold / deny for any payment an agent wants to make.
+    Register this spec as an AgentCore Gateway target so every AgentCore agent gets
+    an axiru_check_payment tool without code changes. Requires an Axiru API key.
+servers:
+  - url: https://www.axiru.com/api/v1
+paths:
+  /decisions:
+    post:
+      operationId: axiru_check_payment
+      summary: Check a payment against company policy before it executes. Call before any x402 or Stripe payment.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action, amount_cents, currency, counterparty]
+              properties:
+                intent_id: { type: string, description: Reuse on retry. Idempotent. }
+                agent_id: { type: string }
+                action: { type: string, enum: [refund, credit, payout, transfer, purchase, dispute] }
+                amount_cents: { type: integer, minimum: 1 }
+                currency: { type: string, example: usd }
+                counterparty: { type: string, description: x402 endpoint URL, wallet, vendor id, or customer id }
+                rail: { type: string, example: x402 }
+                reason: { type: string, description: Recorded, never evaluated. }
+                customer_id: { type: string }
+                stripe_charge_id: { type: string }
+                original_amount_cents: { type: integer }
+                context:
+                  type: object
+                  properties:
+                    platform: { type: string, example: agentcore }
+                    session_id: { type: string, description: AgentCore PaymentSession id }
+      responses:
+        "200":
+          description: Decision
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  decision_id: { type: string }
+                  verdict: { type: string, enum: [allow, hold, deny] }
+                  reason_codes: { type: array, items: { type: string } }
+                  rationale: { type: string }
+                  policy_id: { type: string }
+                  policy_version: { type: string }
+                  fingerprint: { type: string }
+  /decisions/{decision_id}/outcome:
+    post:
+      operationId: axiru_report_outcome
+      summary: Report what the rail actually did, so the receipt records execution.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: decision_id
+          required: true
+          schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [succeeded, failed, pending, not_executed] }
+                provider_ref: { type: string, description: x402 receipt, tx hash, or refund id }
+      responses:
+        "200": { description: Recorded }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer }

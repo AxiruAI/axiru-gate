@@ -1,0 +1,9 @@
+{
+  "policy_id": "grok-bot-personal",
+  "version": "1.0.0",
+  "per_transfer_ceiling_minor": 50000,
+  "hold_above_minor": 15000,
+  "daily_cap_per_agent_minor": 100000,
+  "always_hold_actions": ["dispute", "payout", "transfer"],
+  "counterparty_allowlist": []
+}

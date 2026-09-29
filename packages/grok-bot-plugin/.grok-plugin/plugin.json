@@ -1,0 +1,11 @@
+{
+  "name": "axiru-payment-gate",
+  "version": "0.1.0",
+  "description": "Set the rules once, stop tapping approve. A deterministic policy gate that checks every purchase Grok Bot wants to make with Link against your limits (per-purchase ceiling, daily cap, merchant allowlist) before the card is issued, with a receipt for every decision.",
+  "author": { "name": "Axiru", "url": "https://axiru.com" },
+  "homepage": "https://axiru.com/playground",
+  "repository": "https://github.com/AxiruAI/axiru-gate",
+  "license": "MIT",
+  "keywords": ["payments", "spending limits", "link", "stripe", "purchase", "policy", "approval", "refund", "budget", "guardrails"],
+  "logo": "assets/logo.svg"
+}

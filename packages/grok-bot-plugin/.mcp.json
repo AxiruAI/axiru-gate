@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "axiru-gate": {
+      "command": "npx",
+      "args": ["-y", "@axiru/gate-mcp"],
+      "env": {
+        "AXIRU_POLICY_FILE": "${CLAUDE_PLUGIN_ROOT}/policy.json"
+      }
+    }
+  }
+}

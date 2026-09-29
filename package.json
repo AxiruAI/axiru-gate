@@ -1,0 +1,24 @@
+{
+  "name": "axiru-gate",
+  "private": true,
+  "version": "0.1.0",
+  "description": "One payment gate for every agent platform: Paperclip, Amazon Bedrock AgentCore, Grok Bot, Meta Muse, and any MCP host.",
+  "workspaces": [
+    "packages/core",
+    "packages/mcp-server",
+    "packages/paperclip-plugin",
+    "packages/openshell"
+  ],
+  "scripts": {
+    "build": "npm run build -w @axiru/gate-core && npm run build -w @axiru/gate-mcp && npm run build -w @axiru/paperclip-plugin-gate && npm run build -w @axiru/openshell-middleware",
+    "test": "npm run test -w @axiru/gate-core && npm run test -w @axiru/gate-mcp && npm run test -w @axiru/openshell-middleware"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8",
+    "@types/node": "^22.10.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
