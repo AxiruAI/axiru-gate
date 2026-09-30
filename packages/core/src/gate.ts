@@ -88,42 +88,59 @@ export class Gate {
   }
 
   private async remote(intent: PaymentIntent): Promise<Decision> {
-    const res = await this.opts.fetchImpl(`${this.opts.baseUrl}/decisions`, {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${this.opts.apiKey}` },
-      body: JSON.stringify({
-        intent_id: intent.intent_id,
-        agent_id: intent.agent_id,
-        action: intent.action,
-        amount_cents: intent.amount_minor,
-        currency: intent.currency.toLowerCase(),
-        counterparty: intent.counterparty,
-        rail: intent.rail,
-        customer_id: intent.customer_id,
-        stripe_charge_id: intent.original_charge?.id,
-        original_amount_cents: intent.original_charge?.amount_minor,
-        reason: intent.reason,
-        context: intent.context,
-      }),
-    });
-    if (!res.ok) {
-      // Fail closed. A gate that cannot reach its policy does not say yes.
+    const held = (why: string): Decision => {
       const now = this.opts.now();
       return {
         decision_id: `dec_unavailable_${Date.parse(now)}`,
         intent_id: intent.intent_id,
         verdict: "hold",
         reason_codes: ["ACTION_REQUIRES_HUMAN"],
-        rationale: `Held for a person: policy service returned HTTP ${res.status}; the gate fails closed.`,
+        rationale: `Held for a person: ${why}; the gate fails closed.`,
         policy_id: "remote",
         policy_version: "unknown",
         evaluated_at: now,
         fingerprint: "",
         prev_fingerprint: this.lastFingerprint,
       };
+    };
+
+    let res: Response;
+    try {
+      res = await this.opts.fetchImpl(`${this.opts.baseUrl}/decisions`, {
+        method: "POST",
+        // Never follow a redirect. A policy endpoint that answers with a login page is an outage, not a decision.
+        redirect: "manual",
+        headers: { "content-type": "application/json", accept: "application/json", authorization: `Bearer ${this.opts.apiKey}` },
+        body: JSON.stringify({
+          intent_id: intent.intent_id,
+          agent_id: intent.agent_id,
+          action: intent.action,
+          amount_cents: intent.amount_minor,
+          currency: intent.currency.toLowerCase(),
+          counterparty: intent.counterparty,
+          rail: intent.rail,
+          customer_id: intent.customer_id,
+          stripe_charge_id: intent.original_charge?.id,
+          original_amount_cents: intent.original_charge?.amount_minor,
+          reason: intent.reason,
+          context: intent.context,
+        }),
+      });
+    } catch (e) {
+      return held(`policy service unreachable (${String(e)})`);
     }
-    const body = (await res.json()) as Partial<Decision> & { status?: string; decision_id?: string };
+    if (res.status >= 300 && res.status < 400) return held(`policy service redirected (HTTP ${res.status}), likely an auth misconfiguration`);
+    if (!res.ok) return held(`policy service returned HTTP ${res.status}`);
+    const ctype = res.headers.get("content-type") ?? "";
+    if (!ctype.includes("json")) return held(`policy service returned ${ctype || "an unknown content type"} instead of JSON`);
+    let body: Partial<Decision> & { status?: string; decision_id?: string };
+    try {
+      body = (await res.json()) as typeof body;
+    } catch {
+      return held("policy service returned unparseable JSON");
+    }
     const verdict = (body.verdict ?? mapStatus(body.status)) as Decision["verdict"];
+    if (!["allow", "hold", "deny"].includes(verdict)) return held(`policy service returned an unknown verdict`);
     return {
       decision_id: body.decision_id ?? `dec_${Date.parse(this.opts.now())}`,
       intent_id: intent.intent_id,

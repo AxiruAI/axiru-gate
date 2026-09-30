@@ -97,6 +97,27 @@ describe("Gate", () => {
     expect(again.decision_id).toBe(d1.decision_id);
     expect(g.ledger()).toHaveLength(2);
   });
+  it("fails closed on a redirect to a login page instead of following it", async () => {
+    const g = new Gate({ apiKey: "k", now: () => NOW, fetchImpl: (async () => new Response("", { status: 307, headers: { location: "https://www.axiru.com/sign-in" } })) as typeof fetch });
+    const d = await g.check(intent({ intent_id: "redir" }));
+    expect(d.verdict).toBe("hold");
+    expect(d.rationale).toMatch(/redirected/);
+  });
+  it("fails closed on an HTML body with a 200", async () => {
+    const g = new Gate({ apiKey: "k", now: () => NOW, fetchImpl: (async () => new Response("<html>Sign in</html>", { status: 200, headers: { "content-type": "text/html" } })) as typeof fetch });
+    const d = await g.check(intent({ intent_id: "html" }));
+    expect(d.verdict).toBe("hold");
+  });
+  it("fails closed when fetch throws", async () => {
+    const g = new Gate({ apiKey: "k", now: () => NOW, fetchImpl: (async () => { throw new Error("ECONNREFUSED"); }) as typeof fetch });
+    const d = await g.check(intent({ intent_id: "net" }));
+    expect(d.verdict).toBe("hold");
+  });
+  it("never returns allow for an unknown verdict from the API", async () => {
+    const g = new Gate({ apiKey: "k", now: () => NOW, fetchImpl: (async () => new Response(JSON.stringify({ verdict: "yes" }), { status: 200, headers: { "content-type": "application/json" } })) as typeof fetch });
+    const d = await g.check(intent({ intent_id: "weird" }));
+    expect(d.verdict).toBe("hold");
+  });
   it("fails closed when the hosted API is unreachable", async () => {
     const g = new Gate({ apiKey: "k", now: () => NOW, fetchImpl: (async () => new Response("down", { status: 503 })) as typeof fetch });
     const d = await g.check(intent({ intent_id: "r" }));

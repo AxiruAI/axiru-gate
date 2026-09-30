@@ -1,6 +1,6 @@
 {
   "name": "@axiru/gate-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MCP server that puts a deterministic payment gate in front of any agent that can move money. Works with Grok Bot, Claude, Cursor, and any MCP host.",
   "type": "module",
   "bin": {
@@ -15,7 +15,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@axiru/gate-core": "^0.1.0",
+    "@axiru/gate-core": "^0.1.2",
     "@modelcontextprotocol/sdk": "^1.12.0",
     "zod": "^3.24.1"
   },
