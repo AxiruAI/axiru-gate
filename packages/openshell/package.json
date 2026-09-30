@@ -1,12 +1,21 @@
 {
   "name": "@axiru/openshell-middleware",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "NVIDIA OpenShell supervisor middleware that puts the Axiru payment gate on every Stripe call an agent makes. The agent cannot skip the check because the sandbox routes the call through it.",
   "type": "module",
-  "bin": { "axiru-openshell-middleware": "./dist/cli.js" },
+  "bin": {
+    "axiru-openshell-middleware": "./dist/cli.js"
+  },
   "main": "./dist/middleware.js",
-  "files": ["dist", "proto", "policy.yaml"],
-  "scripts": { "build": "tsc -p tsconfig.json && chmod +x dist/cli.js", "test": "vitest run" },
+  "files": [
+    "dist",
+    "proto",
+    "policy.yaml"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
+    "test": "vitest run"
+  },
   "dependencies": {
     "@axiru/gate-core": "^0.1.0",
     "@grpc/grpc-js": "^1.12.4",

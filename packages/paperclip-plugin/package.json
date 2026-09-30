@@ -1,12 +1,23 @@
 {
   "name": "@axiru/paperclip-plugin-gate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Paperclip plugin: a deterministic payment gate every agent in the company must call before moving money. Holds open a board task; denials pause the agent after repeated attempts.",
   "type": "module",
-  "files": ["dist", "src"],
-  "exports": { ".": "./src/index.ts" },
-  "paperclipPlugin": { "manifest": "./dist/manifest.js", "worker": "./dist/worker.js" },
-  "scripts": { "build": "tsc -p tsconfig.json", "typecheck": "tsc --noEmit -p tsconfig.json" },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "paperclipPlugin": {
+    "manifest": "./dist/manifest.js",
+    "worker": "./dist/worker.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
   "dependencies": {
     "@axiru/gate-core": "^0.1.0",
     "@paperclipai/plugin-sdk": "2026.916.1"
