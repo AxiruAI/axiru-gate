@@ -2,7 +2,7 @@ import { definePlugin, runWorker } from "@paperclipai/plugin-sdk";
 import type { PluginContext, ToolResult, ToolRunContext } from "@paperclipai/plugin-sdk";
 import { Gate, DEFAULT_REFUND_POLICY } from "@axiru/gate-core";
 import type { Decision, PaymentAction, PaymentIntent, Policy, PriorDecision } from "@axiru/gate-core";
-import { PLUGIN_ID, TOOL_CHECK, TOOL_REPORT } from "./manifest.js";
+import { CHECK_TOOL, PLUGIN_ID, REPORT_TOOL, TOOL_CHECK, TOOL_REPORT } from "./manifest.js";
 
 interface Config {
   mode: "local" | "hosted";
@@ -76,27 +76,7 @@ const plugin = definePlugin({
 
     ctx.tools.register(
       TOOL_CHECK,
-      {
-        displayName: "Axiru: check payment",
-        description:
-          "Call BEFORE any action that moves money (refund, credit, payout, transfer, purchase, dispute). Returns allow, hold, or deny with reason codes and a receipt. On hold, a task is opened for the board; stop and wait. On deny, do not retry with different numbers.",
-        parametersSchema: {
-          type: "object",
-          properties: {
-            action: { type: "string", enum: ["refund", "credit", "payout", "transfer", "purchase", "dispute"] },
-            amount_minor: { type: "integer", description: "Cents. 1250 = 12.50" },
-            currency: { type: "string", description: "ISO 4217, e.g. USD" },
-            counterparty: { type: "string", description: "Vendor id, merchant domain, wallet, or customer id" },
-            rail: { type: "string" },
-            reason: { type: "string", description: "Recorded, never evaluated" },
-            customer_id: { type: "string" },
-            original_charge_id: { type: "string" },
-            original_charge_amount_minor: { type: "integer" },
-            intent_id: { type: "string", description: "Reuse on retry; idempotent" },
-          },
-          required: ["action", "amount_minor", "currency", "counterparty"],
-        },
-      },
+      { displayName: CHECK_TOOL.displayName, description: CHECK_TOOL.description, parametersSchema: CHECK_TOOL.parametersSchema },
       async (params, runCtx: ToolRunContext): Promise<ToolResult> => {
         const p = params as Record<string, unknown>;
         const gate = await gateFor(ctx, runCtx.companyId, config);
@@ -159,15 +139,7 @@ const plugin = definePlugin({
 
     ctx.tools.register(
       TOOL_REPORT,
-      {
-        displayName: "Axiru: report outcome",
-        description: "Call AFTER the payment tool returns, with the same intent_id, so the receipt records what the rail actually did.",
-        parametersSchema: {
-          type: "object",
-          properties: { intent_id: { type: "string" }, status: { type: "string" }, provider_ref: { type: "string" } },
-          required: ["intent_id", "status"],
-        },
-      },
+      { displayName: REPORT_TOOL.displayName, description: REPORT_TOOL.description, parametersSchema: REPORT_TOOL.parametersSchema },
       async (params, runCtx): Promise<ToolResult> => {
         const p = params as { intent_id: string; status: string; provider_ref?: string };
         const gate = await gateFor(ctx, runCtx.companyId, config);
